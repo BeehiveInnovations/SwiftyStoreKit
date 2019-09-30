@@ -27,126 +27,126 @@ import Foundation
 @testable import SwiftyStoreKit
 
 class TestInAppProductRequest: InAppProductRequest {
-    
-    var hasCompleted: Bool
-    var cachedResults: RetrieveResults?
-    
-    private let productIds: Set<String>
-    private let callback: InAppProductRequestCallback
 
-    init(productIds: Set<String>, callback: @escaping InAppProductRequestCallback) {
-        self.productIds = productIds
-        self.callback = callback
-        self.hasCompleted = false
-    }
-    
-    func start() {
+  var hasCompleted: Bool
+  var cachedResults: RetrieveResults?
 
-    }
-    func cancel() {
-        
-    }
-    
-    func fireCallback() {
-        callback(RetrieveResults(retrievedProducts: [], invalidProductIDs: [], error: nil))
-    }
+  private let productIds: Set<String>
+  private let callback: InAppProductRequestCallback
+
+  init(productIds: Set<String>, callback: @escaping InAppProductRequestCallback) {
+    self.productIds = productIds
+    self.callback = callback
+    self.hasCompleted = false
+  }
+
+  func start() {
+
+  }
+  func cancel() {
+
+  }
+
+  func fireCallback() {
+    callback(RetrieveResults(retrievedProducts: [], invalidProductIDs: [], error: nil))
+  }
 }
 
 class TestInAppProductRequestBuilder: InAppProductRequestBuilder {
-    
-    var requests: [ TestInAppProductRequest ] = []
-    
-    func request(productIds: Set<String>, callback: @escaping InAppProductRequestCallback) -> InAppProductRequest {
-        let request = TestInAppProductRequest(productIds: productIds, callback: callback)
-        requests.append(request)
-        return request
+
+  var requests: [ TestInAppProductRequest ] = []
+
+  func request(productIds: Set<String>, callback: @escaping InAppProductRequestCallback) -> InAppProductRequest {
+    let request = TestInAppProductRequest(productIds: productIds, callback: callback)
+    requests.append(request)
+    return request
+  }
+
+  func fireCallbacks() {
+    requests.forEach {
+      $0.fireCallback()
     }
-    
-    func fireCallbacks() {
-        requests.forEach {
-            $0.fireCallback()
-        }
-        requests = []
-    }
+    requests = []
+  }
 }
 
 class ProductsInfoControllerTests: XCTestCase {
-    
-    let sampleProductIdentifiers: Set<String> = ["com.iap.purchase1"]
-    // Set of in app purchases to ask in different threads
-    let testProducts: Set<String> = ["com.iap.purchase01",
-                                     "com.iap.purchase02",
-                                     "com.iap.purchase03",
-                                     "com.iap.purchase04",
-                                     "com.iap.purchase05",
-                                     "com.iap.purchase06",
-                                     "com.iap.purchase07",
-                                     "com.iap.purchase08",
-                                     "com.iap.purchase09",
-                                     "com.iap.purchase10"]
 
-    func testRetrieveProductsInfo_when_calledOnce_then_completionCalledOnce() {
-        
-        let requestBuilder = TestInAppProductRequestBuilder()
-        let productInfoController = ProductsInfoController(inAppProductRequestBuilder: requestBuilder)
-        
-        var completionCount = 0
-        productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
-            completionCount += 1
-        }
-        requestBuilder.fireCallbacks()
-        
-        XCTAssertEqual(completionCount, 1)
-    }
+  let sampleProductIdentifiers: Set<String> = ["com.iap.purchase1"]
+  // Set of in app purchases to ask in different threads
+  let testProducts: Set<String> = ["com.iap.purchase01",
+                                   "com.iap.purchase02",
+                                   "com.iap.purchase03",
+                                   "com.iap.purchase04",
+                                   "com.iap.purchase05",
+                                   "com.iap.purchase06",
+                                   "com.iap.purchase07",
+                                   "com.iap.purchase08",
+                                   "com.iap.purchase09",
+                                   "com.iap.purchase10"]
 
-    func testRetrieveProductsInfo_when_calledTwiceConcurrently_then_eachCompletionCalledOnce() {
-        
-        let requestBuilder = TestInAppProductRequestBuilder()
-        let productInfoController = ProductsInfoController(inAppProductRequestBuilder: requestBuilder)
-        
-        var completionCount = 0
-        productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
-            completionCount += 1
-        }
-        productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
-            completionCount += 1
-        }
-        requestBuilder.fireCallbacks()
+  func testRetrieveProductsInfo_when_calledOnce_then_completionCalledOnce() {
 
-        XCTAssertEqual(completionCount, 2)
+    let requestBuilder = TestInAppProductRequestBuilder()
+    let productInfoController = ProductsInfoController(inAppProductRequestBuilder: requestBuilder)
+
+    var completionCount = 0
+    productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
+      completionCount += 1
     }
-    func testRetrieveProductsInfo_when_calledTwiceNotConcurrently_then_eachCompletionCalledOnce() {
-        
-        let requestBuilder = TestInAppProductRequestBuilder()
-        let productInfoController = ProductsInfoController(inAppProductRequestBuilder: requestBuilder)
-        
-        var completionCount = 0
-        productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
-            completionCount += 1
-        }
-        requestBuilder.fireCallbacks()
-        XCTAssertEqual(completionCount, 1)
-        
-        productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
-            completionCount += 1
-        }
-        requestBuilder.fireCallbacks()
-        XCTAssertEqual(completionCount, 2)
+    requestBuilder.fireCallbacks()
+
+    XCTAssertEqual(completionCount, 1)
+  }
+
+  func testRetrieveProductsInfo_when_calledTwiceConcurrently_then_eachCompletionCalledOnce() {
+
+    let requestBuilder = TestInAppProductRequestBuilder()
+    let productInfoController = ProductsInfoController(inAppProductRequestBuilder: requestBuilder)
+
+    var completionCount = 0
+    productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
+      completionCount += 1
     }
-  
+    productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
+      completionCount += 1
+    }
+    requestBuilder.fireCallbacks()
+
+    XCTAssertEqual(completionCount, 2)
+  }
+  func testRetrieveProductsInfo_when_calledTwiceNotConcurrently_then_eachCompletionCalledOnce() {
+
+    let requestBuilder = TestInAppProductRequestBuilder()
+    let productInfoController = ProductsInfoController(inAppProductRequestBuilder: requestBuilder)
+
+    var completionCount = 0
+    productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
+      completionCount += 1
+    }
+    requestBuilder.fireCallbacks()
+    XCTAssertEqual(completionCount, 1)
+
+    productInfoController.retrieveProductsInfo(sampleProductIdentifiers) { _ in
+      completionCount += 1
+    }
+    requestBuilder.fireCallbacks()
+    XCTAssertEqual(completionCount, 2)
+  }
+
   func testRetrieveProductsInfo_when_calledConcurrentlyInDifferentThreads_then_eachcompletionCalledOnce_noCrashes() {
     let requestBuilder = TestInAppProductRequestBuilder()
     let productInfoController = ProductsInfoController(inAppProductRequestBuilder: requestBuilder)
-    
+
     var completionCallbackCount = 0
-    
+
     // Create the expectation not to let the test finishes before the other threads complete
     let expectation = XCTestExpectation(description: "Expect downloads of product informations")
-    
+
     // Create the dispatch group to let the test verifies the assert only when
     // everything else finishes.
     let group = DispatchGroup()
-    
+
     // Dispatch a request for every product in a different thread
     for product in testProducts {
       DispatchQueue.global().async {
@@ -162,11 +162,11 @@ class ProductsInfoControllerTests: XCTestCase {
     }
     // Fullfil the expectation when every thread finishes
     group.notify(queue: DispatchQueue.global()) {
-      
+
       XCTAssertEqual(completionCallbackCount, self.testProducts.count)
       expectation.fulfill()
     }
-    
+
     wait(for: [expectation], timeout: 10.0)
   }
 }
