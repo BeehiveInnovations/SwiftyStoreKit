@@ -57,7 +57,6 @@ class ProductsInfoController: NSObject {
 
     @discardableResult
     func retrieveProductsInfo(_ productIds: Set<String>, completion: @escaping (RetrieveResults) -> Void) -> InAppProductRequest {
-        self.lock()
         OSSpinLockLock(&self.spinLock)
         defer {
           OSSpinLockUnlock(&self.spinLock)
@@ -81,21 +80,9 @@ class ProductsInfoController: NSObject {
             }
             inflightRequests[productIds] = InAppProductQuery(request: request, completionHandlers: [completion])
             request.start()
-
             return request
-
         } else {
-            
             inflightRequests[productIds]!.completionHandlers.append(completion)
-
-            let query = inflightRequests[productIds]!
-
-            if query.request.hasCompleted {
-                query.completionHandlers.forEach {
-                    $0(query.request.cachedResults!)
-                }
-            }
-
             return inflightRequests[productIds]!.request
         }
     }
