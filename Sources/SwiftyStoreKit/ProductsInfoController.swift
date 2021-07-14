@@ -57,7 +57,6 @@ class ProductsInfoController: NSObject {
 
     @discardableResult
     func retrieveProductsInfo(_ productIds: Set<String>, completion: @escaping (RetrieveResults) -> Void) -> InAppProductRequest {
-        self.lock()
         OSSpinLockLock(&self.spinLock)
         defer {
           OSSpinLockUnlock(&self.spinLock)
