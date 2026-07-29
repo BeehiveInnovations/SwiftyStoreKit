@@ -45,11 +45,11 @@ class ProductsInfoController: NSObject {
     
     let inAppProductRequestBuilder: InAppProductRequestBuilder
 
-    private var spinLock: OSSpinLock
+    private var unfairLock: os_unfair_lock
 
     init(inAppProductRequestBuilder: InAppProductRequestBuilder = InAppProductQueryRequestBuilder()) {
         self.inAppProductRequestBuilder = inAppProductRequestBuilder
-        self.spinLock = OSSpinLock()
+        self.unfairLock = os_unfair_lock()
     }
     
     // As we can have multiple inflight requests, we store them in a dictionary by product ids
@@ -57,15 +57,15 @@ class ProductsInfoController: NSObject {
 
     @discardableResult
     func retrieveProductsInfo(_ productIds: Set<String>, completion: @escaping (RetrieveResults) -> Void) -> InAppProductRequest {
-        OSSpinLockLock(&self.spinLock)
+        os_unfair_lock_lock(&self.unfairLock)
         defer {
-          OSSpinLockUnlock(&self.spinLock)
+          os_unfair_lock_unlock(&self.unfairLock)
         }
         if inflightRequests[productIds] == nil {
             let request = inAppProductRequestBuilder.request(productIds: productIds) { results in
-                OSSpinLockLock(&self.spinLock)
+                os_unfair_lock_lock(&self.unfairLock)
                 defer {
-                  OSSpinLockUnlock(&self.spinLock)
+                  os_unfair_lock_unlock(&self.unfairLock)
                 }
 
                 if let query = self.inflightRequests[productIds] {
